@@ -3,7 +3,7 @@ import Signal exposing (Message)
 import StartApp.Simple exposing (start)
 import List as List
 
-import Widget.Accordion as Accordion exposing (Accordion, view)
+import Widget.Datepicker as Datepicker exposing (view)
 
 type Action
   = NoOp
@@ -38,22 +38,9 @@ update action model =
                     else entry
             ) model
 
-viewPanel : Entry -> Html
-viewPanel entry =
-  div []
-      [Html.text entry.synopsis]
-
-accordion : Signal.Address Action -> Accordion Entry
-accordion address =
-    { viewHeader = .title >> Html.text
-    , viewPanel = viewPanel 
-    , setExpanded = \expanded {id} -> Signal.message address (SetExpanded id expanded)
-    , getExpanded = .expanded
-    }
-
 view : Signal.Address Action -> List Entry -> Html
 view address model =
-    Accordion.view (accordion address) model
+    Datepicker.view "as" 
 
 main =
   start
