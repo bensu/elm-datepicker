@@ -2,7 +2,7 @@ module Widget.Datepicker (view) where
 
 
 import Html exposing (..) 
-import Html.Attributes exposing (class, classList, attribute, style)
+import Html.Attributes exposing (..)
 import Html.Events exposing (on)
 import Signal exposing (Message)
 import Json.Decode
@@ -30,7 +30,7 @@ title name =
 
 header =
   div [class "ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all"] 
-  [ icon "Prev" "ui-datepicker-prev" "ui-icon-circle-triangle"
+  [ icon "Prev" "ui-datepicker-prev" "ui-icon-circle-triangle-w"
   , icon "Next" "ui-datepicker-next" "ui-icon-circle-triangle-e"
   , title "November"
   ] 
@@ -38,7 +38,7 @@ header =
 type alias Day = { name: String, isWeekend: Bool }
 
 days = List.map2 (\n b -> { name=n, isWeekend=b })
-                 ["Su", "Mo", "Tu", "Wed", "Th", "Fr", "Sa"]
+                 ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
                  [True, False, False, False, False, False, True]
 
 dayLabel : Day -> Html
@@ -53,8 +53,10 @@ monthDays = List.repeat 4 dayNumbers
 
 dayNumber : Int -> Html
 dayNumber n =
-          td [class "ui-datepicker"]
-             [a [class "ui-state-default"]
+          td []
+             [a [ class "ui-state-default"
+                , href "#"
+                ]
                 [Html.text (toString n)]]
 
 weekRow : List Int -> Html
