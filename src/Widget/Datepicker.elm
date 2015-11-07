@@ -1,11 +1,18 @@
-module Widget.Datepicker (view) where
-
+module Widget.Datepicker (Datepicker, Action, view, update) where
 
 import Html exposing (..) 
 import Html.Attributes exposing (..)
-import Html.Events exposing (on)
-import Signal exposing (Message)
+import Html.Events exposing (onBlur, onFocus)
+import Signal exposing (Message, Address)
 import Json.Decode
+
+-- Model
+
+type alias Datepicker = {
+     isOn: Bool
+}
+
+type Action = NoOp | Blur | Focus
 
 icon : String -> String -> String -> Html
 icon name linkName iconName =
@@ -53,6 +60,12 @@ dayLabel day =
 dayNumbers = List.repeat 7 1
 monthDays = List.repeat 4 dayNumbers
 
+monthNamesShort = [ "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ]
+
+monthNames = [ "January","February","March","April","May","June",
+               "July","August","September","October","November","December" ]
+               
 dayNumber : Int -> Html
 dayNumber n =
           td []
@@ -75,16 +88,33 @@ calendar a =
         ,tbody []
                (List.map weekRow monthDays)]
 
-view : String -> Html
-view a =
-        div
-            [ class "ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all"
-            , attribute "aria-live" "polite"
-            , style
-                [ ("display", "block")
-                , ("position", "absolute")
-                , ("z-index", "1")
-                ]
-            ]
-            [ header
-            , calendar "asdf"]
+view: Address Action -> Datepicker -> Html
+view address datepicker =
+  div []
+      [ input [ onBlur address Blur
+              , onFocus address Focus]
+              []
+      , div
+           [ class "ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all"
+           , attribute "aria-live" "polite"
+           , style
+               [ ("display", (if datepicker.isOn
+                              then "block"
+                              else "none"))
+               , ("position", "absolute")
+               , ("z-index", "1")
+               ]
+           ]
+           [ header
+           , calendar "asdf"
+           ]]
+
+update : Action -> Datepicker -> Datepicker 
+update action model =
+    case action of
+        NoOp ->
+            model
+        Blur ->
+            { model | isOn <- False } 
+        Focus ->
+            { model | isOn <- True }

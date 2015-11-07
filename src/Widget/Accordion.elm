@@ -1,4 +1,4 @@
-module Widget.Accordion (Accordion, view, originalView) where
+module Widget.Accordion (Accordion, view, originalView, Action) where
 
 
 import Html exposing (Html, Attribute, div)
