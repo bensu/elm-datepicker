@@ -16,9 +16,11 @@ icon name linkName iconName =
                          ,(iconName, True)
                          ])
  in 
-    a [classList [ ("ui-corner-all", True)
-                 , (linkName, True)
-                 ]]
+    a [ classList [ ("ui-corner-all", True)
+                  , (linkName, True)
+                  ]
+      , Html.Attributes.title name
+      ]
       [span [iconClass]
         [Html.text name]]
 
