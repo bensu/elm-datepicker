@@ -6,7 +6,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events as Event 
 import Signal exposing (Message, Address)
-import Json.Decode
+import Json.Decode exposing (float, (:=))
 
 import Date.Util
 
@@ -130,7 +130,13 @@ view: Address Action -> Datepicker -> Html
 view address datepicker =
   div []
       [ input [ Event.onBlur address Blur
-              , Event.onFocus address (Focus (Date.Nov, 2015))
+              , Event.on
+                     "focus"
+                     ((:=) "timeStamp" Json.Decode.float)
+                     (\t -> let d = Date.fromTime t
+                            in
+                              Signal.message address (Focus ((Date.month d),
+                                                             (Date.year d))))
               , value (renderDate datepicker.date)
               ]
               []
@@ -159,6 +165,8 @@ update action model =
             { model | isOn <- False } 
         Focus selectedMonth ->
             { model | isOn <- True
-                    , selectMonth <- selectedMonth }
+            , selectMonth <- case model.sectedMonth of
+                               Nothing -> selectedMonth
+                               Just m -> m}
         Select date ->
             { model | date <- Just date }
