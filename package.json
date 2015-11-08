@@ -1,5 +1,5 @@
 {
-  "name": "elm-html-widgets",
+  "name": "elm-datepicker",
   "version": "1.0.0",
   "description": "Reusable widgets for elm-html",
   "main": "",
@@ -17,22 +17,18 @@
     "mocha": "2.3.3",
     "phantomjs": "1.9.18"
   },
-  "scripts": {
-    "test": "cd test && ../node_modules/.bin/elm-package install --yes && ../node_modules/.bin/elm-make TestAccordion.elm --yes --output ../build/TestAccordion.js && ../node_modules/.bin/karma start karma.conf.js --single-run",
-    "travis-test": "cd test && ../node_modules/.bin/elm-package install --yes && ../node_modules/.bin/elm-make TestAccordion.elm --yes --output ../build/TestAccordion.js && ../node_modules/.bin/karma start karma.conf.js --single-run --no-colors"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NoRedInk/elm-html-widgets.git"
+    "url": "git+https://github.com/bensu/elm-datepicker.git"
   },
   "keywords": [
     "elm",
     "elm-html"
   ],
-  "author": "NoRedInk",
+  "author": "bensu",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/NoRedInk/elm-html-widgets/issues"
+    "url": "https://github.com/bensu/elm-datepicker/issues"
   },
-  "homepage": "https://github.com/NoRedInk/elm-html-widgets#readme"
+  "homepage": "https://github.com/bensu/elm-datepicker#readme"
 }

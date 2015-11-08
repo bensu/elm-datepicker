@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
-    "summary": "Reusable widgets for elm-html",
-    "repository": "https://github.com/NoRedInk/elm-html-widgets.git",
+    "summary": "Reusable datepicker for elm-html",
+    "repository": "https://github.com/bensu/elm-datepicker.git",
     "license": "BSD-3-Clause",
     "source-directories": [
         "src"
