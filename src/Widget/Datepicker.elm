@@ -12,6 +12,8 @@ import Date.Util
 
 -- Model
 
+{- selectMonth should be a Maybe, to allow for distinguish between
+   an empty value on start -}
 type alias Datepicker = {
      date: Maybe Date,
      selectMonth: (Date.Month, Int),
@@ -164,6 +166,8 @@ renderDate date =
       in 
         String.concat (List.intersperse "/" strs) 
   
+{- onBlur should be 'click out' to allow for clicks an not onMouseOver
+   on other events -}
 view: Address Action -> Datepicker -> Html
 view address datepicker =
   div []
@@ -202,6 +206,7 @@ update action model =
             model
         Blur ->
             { model | isOn <- False } 
+        -- should replace only on the Nothing case, see initValue
         Focus newSelectMonth ->
             { model | isOn <- True
             , selectMonth <- newSelectMonth}
