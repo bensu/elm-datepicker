@@ -14,11 +14,13 @@ import Date.Util
 
 type alias Datepicker = {
      date: Maybe Date,
+     selectMonth: (Date.Month, Int),
      isOn: Bool
 }
 
-now = Date.fromTime 1449010800000
-initValue = { date = Nothing, isOn = False }
+initValue = { date = Nothing
+            , isOn = False
+            , selectMonth = (,) Date.Nov 2015 }
 
 type Action = NoOp | Blur | Focus | Select Date 
 
@@ -67,8 +69,6 @@ dayLabel day =
             [span [] [Html.text day.name]]
             
   
-monthDays = Date.Util.allWeeksInMonth (Date.month now) (Date.year now) 
-
 dayNumber : Address Action -> Maybe Date -> Html
 dayNumber address date =
   case date of
@@ -102,14 +102,16 @@ weekRow address week =
            (List.map (dayNumber address)
                      (completeWeek (List.map (\d -> Just d) week)))
 
-calendar : Address Action -> Html
-calendar address =
+calendar : Address Action -> (Date.Month, Int) -> Html
+calendar address selectMonth =
   table [class "ui-datepicker-calendar"]
         [thead []
                [tr []
                    (List.map dayLabel days)]
         ,tbody []
-               (List.map (weekRow address) monthDays)]
+               (List.map (weekRow address)
+                         (Date.Util.allWeeksInMonth (fst selectMonth)
+                                                    (snd selectMonth)))]
 
 renderDate : Maybe Date -> String
 renderDate date =
@@ -143,9 +145,10 @@ view address datepicker =
                , ("z-index", "1")
                ]
            ]
-           [ header (Date.month now)
-           , calendar address 
-           ]]
+           [ header (fst datepicker.selectMonth)
+           , calendar address datepicker.selectMonth
+           ]
+      ]
 
 update : Action -> Datepicker -> Datepicker 
 update action model =
