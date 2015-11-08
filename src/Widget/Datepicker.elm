@@ -24,7 +24,10 @@ initValue = { date = Nothing
             , isOn = False
             , selectMonth = (,) Date.Dec 2015 }
 
-type Action = NoOp | Blur | Focus (Date.Month, Int) | Select Date | IncMonth
+type Move = Prev | Next
+
+type Action = NoOp | Blur | Focus (Date.Month, Int)
+            | Select Date | DeltaMonth Move
 
 ------------
 -- Header --
@@ -36,9 +39,19 @@ type alias Icon = {
 }
 
 -- Html for the Prev and Next buttons
-icon : Address Action -> Icon -> Html
-icon address i =
- let iconClassList =
+icon : Address Action -> Move -> Html
+icon address move =
+ let
+   i = case move of
+         Prev -> { iconName = "Prev"
+                 , linkName = "ui-datepicker-prev"
+                 , iconClass = "ui-icon-circle-triangle-w"
+                 }
+         Next -> { iconName = "Next"
+                 , linkName = "ui-datepicker-next"
+                 , iconClass = "ui-icon-circle-triangle-e"
+                 }
+   iconClassList =
                (classList 
                          [ ("ui-corner-all", True)
                          , ("ui-icon", True)
@@ -48,7 +61,7 @@ icon address i =
     a [ classList [ ("ui-corner-all", True)
                   , (i.linkName, True)
                   ]
-      , Event.onMouseOver address IncMonth
+      , Event.onMouseOver address (DeltaMonth move) 
       , Html.Attributes.title i.iconName
       ]
       [span [iconClassList]
@@ -65,18 +78,8 @@ title name =
 header : Address Action -> (Date.Month, Int) -> Html
 header address (m,y) =
   div [class "ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all"] 
-  [ icon
-      address
-      { iconName = "Prev"
-      , linkName = "ui-datepicker-prev"
-      , iconClass = "ui-icon-circle-triangle-w"
-      }
-  , icon
-      address 
-      { iconName = "Next"
-      , linkName = "ui-datepicker-next"
-      , iconClass = "ui-icon-circle-triangle-e"
-      }
+  [ icon address Prev
+  , icon address Next 
   , title ((Date.Util.monthName m) ++ " - " ++ (toString y))
   ] 
 
@@ -204,7 +207,10 @@ update action model =
             , selectMonth <- newSelectMonth}
         Select date ->
             { model | date <- Just date }
-        IncMonth ->
+        DeltaMonth move ->
           let (m,y) = model.selectMonth
+              delta = case move of
+                        Prev -> -1
+                        Next -> 1
           in
-            { model | selectMonth <- (Date.Util.addMonths (m, y) 1) } 
+            { model | selectMonth <- (Date.Util.addMonths (m, y) delta) } 

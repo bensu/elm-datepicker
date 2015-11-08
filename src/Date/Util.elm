@@ -38,7 +38,7 @@ newDate : Int -> Date.Month -> Date
 newDate year month = 
   let parts =
         { year = year
-        , month = monthNumber month
+        , month = WebDate.fromMonth month
         , day = 0
         , hour = 0
         , minute = 0
