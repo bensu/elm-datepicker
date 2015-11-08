@@ -24,7 +24,7 @@ initValue = { date = Nothing
             , isOn = False
             , selectMonth = (,) Date.Dec 2015 }
 
-type Action = NoOp | Blur | Focus (Date.Month, Int) | Select Date 
+type Action = NoOp | Blur | Focus (Date.Month, Int) | Select Date | IncMonth
 
 ------------
 -- Header --
@@ -36,8 +36,8 @@ type alias Icon = {
 }
 
 -- Html for the Prev and Next buttons
-icon : Icon -> Html
-icon i =
+icon : Address Action -> Icon -> Html
+icon address i =
  let iconClassList =
                (classList 
                          [ ("ui-corner-all", True)
@@ -48,6 +48,7 @@ icon i =
     a [ classList [ ("ui-corner-all", True)
                   , (i.linkName, True)
                   ]
+      , Event.onMouseOver address IncMonth
       , Html.Attributes.title i.iconName
       ]
       [span [iconClassList]
@@ -61,18 +62,22 @@ title name =
         [Html.text name]]
 
 -- Group with the navigation icons and current month
-header : Date.Month -> Html
-header month =
+header : Address Action -> (Date.Month, Int) -> Html
+header address (m,y) =
   div [class "ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all"] 
-  [ icon { iconName = "Prev"
-         , linkName = "ui-datepicker-prev"
-         , iconClass = "ui-icon-circle-triangle-w"
-         }
-  , icon { iconName = "Next"
-         , linkName = "ui-datepicker-next"
-         , iconClass = "ui-icon-circle-triangle-e"
-         }
-  , title (Date.Util.monthName month)
+  [ icon
+      address
+      { iconName = "Prev"
+      , linkName = "ui-datepicker-prev"
+      , iconClass = "ui-icon-circle-triangle-w"
+      }
+  , icon
+      address 
+      { iconName = "Next"
+      , linkName = "ui-datepicker-next"
+      , iconClass = "ui-icon-circle-triangle-e"
+      }
+  , title ((Date.Util.monthName m) ++ " - " ++ (toString y))
   ] 
 
 ----------------------------
@@ -182,7 +187,7 @@ view address datepicker =
                , ("z-index", "1")
                ]
            ]
-           [ header (fst datepicker.selectMonth)
+           [ header address datepicker.selectMonth
            , calendar address datepicker.selectMonth
            ])
       ]
@@ -199,3 +204,7 @@ update action model =
             , selectMonth <- newSelectMonth}
         Select date ->
             { model | date <- Just date }
+        IncMonth ->
+          let (m,y) = model.selectMonth
+          in
+            { model | selectMonth <- (Date.Util.addMonths (m, y) 1) } 
