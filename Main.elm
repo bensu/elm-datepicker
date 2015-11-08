@@ -7,7 +7,7 @@ import Widget.Datepicker as Datepicker exposing (Action, view, Datepicker)
 
 main =
   start
-    { model = { isOn = False, date = { day=0, month=0, year=0 } } 
+    { model = Datepicker.initValue
     , update = Datepicker.update
     , view = Datepicker.view
     }

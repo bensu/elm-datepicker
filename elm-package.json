@@ -4,8 +4,10 @@
     "repository": "https://github.com/bensu/elm-datepicker.git",
     "license": "BSD-3-Clause",
     "source-directories": [
-        "src"
+        "src",
+        "../elm-web-api/src"
     ],
+    "native-modules": true,
     "exposed-modules": [],
     "dependencies": {
         "elm-lang/core": "2.0.0 <= v < 3.0.0",

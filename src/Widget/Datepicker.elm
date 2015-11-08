@@ -1,6 +1,8 @@
-module Widget.Datepicker (Datepicker, Action, view, update) where
+module Widget.Datepicker (Datepicker, Action, view, update, initValue) where
 
+import WebAPI.Date as WebDate
 import String as String
+import Date as Date exposing (Date)
 import Html exposing (..) 
 import Html.Attributes exposing (..)
 import Html.Events as Event 
@@ -9,16 +11,13 @@ import Json.Decode
 
 -- Model
 
-type alias Date = {
-     day: Int,
-     month: Int,
-     year: Int
-}
-
 type alias Datepicker = {
-     date: Date,
+     date: Maybe Date,
      isOn: Bool
 }
+
+now = Date.fromTime 1449010800000
+initValue = { date = Nothing, isOn = False }
 
 type Action = NoOp | Blur | Focus | Select Date 
 
@@ -45,11 +44,12 @@ title name =
       [span [class "ui-datepicker-month"]
         [Html.text name]]
 
-header =
+header : Date.Month -> Html
+header month =
   div [class "ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all"] 
   [ icon "Prev" "ui-datepicker-prev" "ui-icon-circle-triangle-w"
   , icon "Next" "ui-datepicker-next" "ui-icon-circle-triangle-e"
-  , title "November"
+  , title (monthName month)
   ] 
 
 type alias WeekDay = { name: String, isWeekend: Bool }
@@ -65,15 +65,82 @@ dayLabel day =
                     else "")]
             [span [] [Html.text day.name]]
             
-dayNumbers = List.map (\n -> { day=n, month=1, year=2015}) (List.repeat 7 1)
-monthDays =  (List.repeat 4 dayNumbers)
-
 monthNamesShort = [ "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ]
+              
+monthData : Date.Month -> (Int, String)
+monthData m =
+  case m of
+       Date.Jan -> (0,"January")
+       Date.Feb -> (1,"February")
+       Date.Mar -> (2,"March")
+       Date.Apr -> (3,"April")
+       Date.May -> (4,"May")
+       Date.Jun -> (5,"June")
+       Date.Jul -> (6,"July")
+       Date.Aug -> (7,"August")
+       Date.Sep -> (8,"September")
+       Date.Oct -> (9,"October")
+       Date.Nov -> (10,"November")
+       Date.Dec -> (11,"December")
+                  
+monthNumber : Date.Month -> Int
+monthNumber m =
+  fst (monthData m)
 
-monthNames = [ "January","February","March","April","May","June",
-               "July","August","September","October","November","December" ]
-               
+monthName : Date.Month -> String
+monthName m =
+  snd (monthData m)
+      
+addDays : Date -> Int -> Date
+addDays date n =
+  WebDate.offsetTime (toFloat n * 24 * 3600000) date
+
+allDaysInMonth : Date.Month -> Int -> List Date
+allDaysInMonth month year = 
+  let parts =
+        { year = year
+        , month = monthNumber month
+        , day = 0
+        , hour = 0
+        , minute = 0
+        , second = 0
+        , millisecond = 0
+        }
+      firstDate = WebDate.fromParts WebDate.Local parts
+  in                       
+    List.filter (\d -> month == Date.month d)
+                (List.map (addDays firstDate) [1..32])
+
+addToGroups : List (List Date) -> Date -> List (List Date)
+addToGroups groups date =
+  case Date.dayOfWeek date of
+    Date.Sun -> [date] :: groups 
+    _ -> case List.head groups of
+           Nothing -> [[date]]
+           Just group -> ((List.append group [date]) ::
+                          (case (List.tail groups) of
+                             Nothing -> []
+                             Just restGroups -> restGroups))
+
+groupToWeeks : List Date -> List (List Date) -> List (List Date) 
+groupToWeeks daysLeft groups =
+  case List.head daysLeft of
+    Nothing -> groups
+    Just date ->
+      let
+        groups' = addToGroups groups date      
+      in
+        case List.tail daysLeft of
+          Nothing -> groups'
+          Just restOfDays -> groupToWeeks restOfDays groups'
+              
+allWeeksInMonth : Date.Month -> Int -> List (List Date)
+allWeeksInMonth month year = 
+  List.reverse (groupToWeeks (allDaysInMonth month year) [[]])
+  
+monthDays = allWeeksInMonth (Date.month now) (Date.year now) 
+
 dayNumber : Address Action -> Date -> Html
 dayNumber address date =
           td []
@@ -81,7 +148,7 @@ dayNumber address date =
                 , href "#"
                 , Event.onMouseDown address (Select date)
                 ]
-                [Html.text (toString date.day)]]
+                [Html.text (toString (Date.day date))]]
 
 weekRow : Address Action -> List Date -> Html
 weekRow address week = 
@@ -97,11 +164,15 @@ calendar address =
         ,tbody []
                (List.map (weekRow address) monthDays)]
 
-renderDate : Date -> String
+renderDate : Maybe Date -> String
 renderDate date =
-  let strs = List.map toString [date.day, date.month, date.year]
-  in 
-    String.concat (List.intersperse "/" strs) 
+  case date of
+    Nothing -> ""
+    Just d -> 
+      let strs = (List.map (\f -> (toString (f d)))
+                           [Date.day, \m -> monthNumber (Date.month m), Date.year])
+      in 
+        String.concat (List.intersperse "/" strs) 
   
 view: Address Action -> Datepicker -> Html
 view address datepicker =
@@ -122,7 +193,7 @@ view address datepicker =
                , ("z-index", "1")
                ]
            ]
-           [ header
+           [ header (Date.month now)
            , calendar address 
            ]]
 
@@ -136,4 +207,4 @@ update action model =
         Focus ->
             { model | isOn <- True }
         Select date ->
-            { model | date <- date }
+            { model | date <- Just date }
