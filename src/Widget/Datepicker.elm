@@ -20,9 +20,9 @@ type alias Datepicker = {
 
 initValue = { date = Nothing
             , isOn = False
-            , selectMonth = (,) Date.Nov 2015 }
+            , selectMonth = (,) Date.Dec 2015 }
 
-type Action = NoOp | Blur | Focus | Select Date 
+type Action = NoOp | Blur | Focus (Date.Month, Int) | Select Date 
 
 icon : String -> String -> String -> Html
 icon name linkName iconName =
@@ -130,11 +130,11 @@ view: Address Action -> Datepicker -> Html
 view address datepicker =
   div []
       [ input [ Event.onBlur address Blur
-              , Event.onFocus address Focus
+              , Event.onFocus address (Focus (Date.Nov, 2015))
               , value (renderDate datepicker.date)
               ]
               []
-      , div
+      , (div
            [ class "ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all"
            , attribute "aria-live" "polite"
            , style
@@ -147,7 +147,7 @@ view address datepicker =
            ]
            [ header (fst datepicker.selectMonth)
            , calendar address datepicker.selectMonth
-           ]
+           ])
       ]
 
 update : Action -> Datepicker -> Datepicker 
@@ -157,7 +157,8 @@ update action model =
             model
         Blur ->
             { model | isOn <- False } 
-        Focus ->
-            { model | isOn <- True }
+        Focus selectedMonth ->
+            { model | isOn <- True
+                    , selectMonth <- selectedMonth }
         Select date ->
             { model | date <- Just date }
