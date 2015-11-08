@@ -188,8 +188,11 @@ renderDate date =
   case date of
     Nothing -> ""
     Just d -> 
-      let strs = (List.map (\f -> (toString (f d)))
-                           [Date.day, \m -> monthNumber (Date.month m), Date.year])
+      let strs = List.map (\f -> (toString (f d)))
+                          [ Date.day
+                          , \d -> 1 + (monthNumber (Date.month d))
+                          , Date.year
+                          ]
       in 
         String.concat (List.intersperse "/" strs) 
   
