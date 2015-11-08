@@ -141,8 +141,11 @@ allWeeksInMonth month year =
   
 monthDays = allWeeksInMonth (Date.month now) (Date.year now) 
 
-dayNumber : Address Action -> Date -> Html
+dayNumber : Address Action -> Maybe Date -> Html
 dayNumber address date =
+  case date of
+    Nothing -> td [] []
+    Just date ->
           td []
              [a [ class "ui-state-default"
                 , href "#"
@@ -150,10 +153,26 @@ dayNumber address date =
                 ]
                 [Html.text (toString (Date.day date))]]
 
+-- Where is the Maybe monad when you need it?
+-- So close yet so far away...
+completeWeek : List (Maybe Date) -> List (Maybe Date)
+completeWeek week =
+  if (List.length week == 7)
+  then week
+  else 
+    case List.head week of
+      Nothing -> completeWeek (Nothing :: week)
+      Just d -> case d of
+                  Nothing -> completeWeek (Nothing :: week)
+                  Just d -> case Date.dayOfWeek d of
+                              Date.Sun -> week
+                              _ -> completeWeek (Nothing :: week)
+
 weekRow : Address Action -> List Date -> Html
 weekRow address week = 
         tr []
-           (List.map (dayNumber address) week)
+           (List.map (dayNumber address)
+                     (completeWeek (List.map (\d -> Just d) week)))
 
 calendar : Address Action -> Html
 calendar address =
