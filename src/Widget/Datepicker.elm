@@ -5,7 +5,7 @@ import Date as Date exposing (Date)
 import Html exposing (..) 
 import Html.Attributes exposing (..)
 import Html.Events as Event 
-import Signal exposing (Message, Address)
+import Signal exposing (Address)
 import Json.Decode exposing (float, (:=))
 
 import Date.Util
@@ -18,42 +18,65 @@ type alias Datepicker = {
      isOn: Bool
 }
 
+-- Dec 2015: hack to avoid having selectMonth be a Maybe type
+-- Users will never see that date, since it is updated on the first focus
 initValue = { date = Nothing
             , isOn = False
             , selectMonth = (,) Date.Dec 2015 }
 
 type Action = NoOp | Blur | Focus (Date.Month, Int) | Select Date 
 
-icon : String -> String -> String -> Html
-icon name linkName iconName =
- let iconClass =
+------------
+-- Header --
+
+type alias Icon = {
+    iconName: String,
+    iconClass: String,
+    linkName: String
+}
+
+-- Html for the Prev and Next buttons
+icon : Icon -> Html
+icon i =
+ let iconClassList =
                (classList 
                          [ ("ui-corner-all", True)
                          , ("ui-icon", True)
-                         , (iconName, True)
+                         , (i.iconClass, True)
                          ])
  in 
     a [ classList [ ("ui-corner-all", True)
-                  , (linkName, True)
+                  , (i.linkName, True)
                   ]
-      , Html.Attributes.title name
+      , Html.Attributes.title i.iconName
       ]
-      [span [iconClass]
-        [Html.text name]]
+      [span [iconClassList]
+        [Html.text i.iconName]]
 
+-- the Datepicker's title is the current month, i.e November
 title : String -> Html
 title name = 
   div [class "ui-datepicker-title"]
       [span [class "ui-datepicker-month"]
         [Html.text name]]
 
+-- Group with the navigation icons and current month
 header : Date.Month -> Html
 header month =
   div [class "ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all"] 
-  [ icon "Prev" "ui-datepicker-prev" "ui-icon-circle-triangle-w"
-  , icon "Next" "ui-datepicker-next" "ui-icon-circle-triangle-e"
+  [ icon { iconName = "Prev"
+         , linkName = "ui-datepicker-prev"
+         , iconClass = "ui-icon-circle-triangle-w"
+         }
+  , icon { iconName = "Next"
+         , linkName = "ui-datepicker-next"
+         , iconClass = "ui-icon-circle-triangle-e"
+         }
   , title (Date.Util.monthName month)
   ] 
+
+----------------------------
+-- Days of the Week names --
 
 type alias WeekDay = { name: String, isWeekend: Bool }
 
@@ -69,6 +92,9 @@ dayLabel day =
             [span [] [Html.text day.name]]
             
   
+----------------
+-- Day Boxes ---
+
 dayNumber : Address Action -> Maybe Date -> Html
 dayNumber address date =
   case date of
@@ -81,13 +107,16 @@ dayNumber address date =
                 ]
                 [Html.text (toString (Date.day date))]]
 
--- Where is the Maybe monad when you need it?
--- So close yet so far away...
+{- The first week of the month may not start on a Sunday,
+   completeWeek completes the first days, from Sunday to
+   the first day, so that they are aligned in the display --}
 completeWeek : List (Maybe Date) -> List (Maybe Date)
 completeWeek week =
   if (List.length week == 7)
   then week
   else 
+    -- Where is the Maybe monad when you need it?
+    -- So close yet so far away...
     case List.head week of
       Nothing -> completeWeek (Nothing :: week)
       Just d -> case d of
@@ -113,6 +142,7 @@ calendar address selectMonth =
                          (Date.Util.allWeeksInMonth (fst selectMonth)
                                                     (snd selectMonth)))]
 
+-- Show the current date in the input field
 renderDate : Maybe Date -> String
 renderDate date =
   case date of
@@ -129,7 +159,8 @@ renderDate date =
 view: Address Action -> Datepicker -> Html
 view address datepicker =
   div []
-      [ input [ Event.onBlur address Blur
+      [ input [ class "ui-datepicker-input"
+              , Event.onBlur address Blur
               , Event.on
                      "focus"
                      ((:=) "timeStamp" Json.Decode.float)
@@ -163,10 +194,8 @@ update action model =
             model
         Blur ->
             { model | isOn <- False } 
-        Focus selectedMonth ->
+        Focus newSelectMonth ->
             { model | isOn <- True
-            , selectMonth <- case model.sectedMonth of
-                               Nothing -> selectedMonth
-                               Just m -> m}
+            , selectMonth <- newSelectMonth}
         Select date ->
             { model | date <- Just date }
