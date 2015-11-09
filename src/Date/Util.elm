@@ -41,7 +41,7 @@ newDate year month =
         , month = WebDate.fromMonth month
         , day = 1
         , hour = 0
-        , minute = 0
+        , minute = 1
         , second = 0
         , millisecond = 0
         }
@@ -54,7 +54,7 @@ allDaysInMonth month year =
     firstDate = newDate year month
   in                       
     List.filter (\d -> month == Date.month d)
-                (List.map (addDays firstDate) [1..32])
+                (List.map (addDays firstDate) [0..32])
 
 addToGroups : List (List Date) -> Date -> List (List Date)
 addToGroups groups date =
