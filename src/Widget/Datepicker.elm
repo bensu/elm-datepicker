@@ -12,19 +12,15 @@ import Date.Util
 
 -- Model
 
-{- selectMonth should be a Maybe, to allow for distinguish between
-   an empty value on start -}
 type alias Datepicker = {
      date: Maybe Date,
-     selectMonth: (Date.Month, Int),
+     selectMonth: Maybe (Date.Month, Int),
      isOn: Bool
 }
 
--- Dec 2015: hack to avoid having selectMonth be a Maybe type
--- Users will never see that date, since it is updated on the first focus
 initValue = { date = Nothing
             , isOn = False
-            , selectMonth = (,) Date.Dec 2015 }
+            , selectMonth = Nothing }
 
 type Move = Prev | Next
 
@@ -142,15 +138,14 @@ weekRow address week =
                      (completeWeek (List.map (\d -> Just d) week)))
 
 calendar : Address Action -> (Date.Month, Int) -> Html
-calendar address selectMonth =
+calendar address (m,y) =
   table [class "ui-datepicker-calendar"]
         [thead []
                [tr []
                    (List.map dayLabel days)]
         ,tbody []
                (List.map (weekRow address)
-                         (Date.Util.allWeeksInMonth (fst selectMonth)
-                                                    (snd selectMonth)))]
+                         (Date.Util.allWeeksInMonth m y))]
 
 -- Show the current date in the input field
 renderDate : Maybe Date -> String
@@ -183,20 +178,22 @@ view address datepicker =
               , value (renderDate datepicker.date)
               ]
               []
-      , (div
-           [ class "ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all"
-           , attribute "aria-live" "polite"
-           , style
-               [ ("display", (if datepicker.isOn
-                              then "block"
-                              else "none"))
-               , ("position", "absolute")
-               , ("z-index", "1")
-               ]
-           ]
-           [ header address datepicker.selectMonth
-           , calendar address datepicker.selectMonth
-           ])
+      , case datepicker.selectMonth of
+          Nothing -> (div [] [])
+          Just m -> (div
+                       [ class "ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all"
+                       , attribute "aria-live" "polite"
+                       , style
+                           [ ("display", (if datepicker.isOn
+                                          then "block"
+                                          else "none"))
+                           , ("position", "absolute")
+                           , ("z-index", "1")
+                           ]
+                       ]
+                       [ header address m
+                       , calendar address m
+                       ])
       ]
 
 update : Action -> Datepicker -> Datepicker 
@@ -206,16 +203,19 @@ update action model =
             model
         Blur ->
             { model | isOn <- False } 
-        -- should replace only on the Nothing case, see initValue
         Focus newSelectMonth ->
             { model | isOn <- True
-            , selectMonth <- newSelectMonth}
+            , selectMonth <- case model.selectMonth of 
+                               Nothing -> (Just newSelectMonth)
+                               Just m -> Just m }
         Select date ->
             { model | date <- Just date }
         DeltaMonth move ->
-          let (m,y) = model.selectMonth
-              delta = case move of
+          case model.selectMonth of
+            Nothing -> model
+            Just (m,y) -> 
+          (let delta = case move of
                         Prev -> -1
                         Next -> 1
-          in
-            { model | selectMonth <- (Date.Util.addMonths (m, y) delta) } 
+           in
+             { model | selectMonth <- Just (Date.Util.addMonths (m, y) delta) }) 
