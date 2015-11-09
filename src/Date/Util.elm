@@ -30,9 +30,10 @@ monthName : Date.Month -> String
 monthName m =
   snd (monthData m)
       
+-- add an extra 3 hours to avoid daylight saving time changes
 addDays : Date -> Int -> Date
 addDays date n =
-  WebDate.offsetTime (toFloat n * 24 * 3600000) date
+  WebDate.offsetTime (toFloat ((n * 24 + 3) * 3600000)) date
 
 newDate : Int -> Date.Month -> Date
 newDate year month = 
