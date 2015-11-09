@@ -1,4 +1,4 @@
-module Date.Util (equalDates, monthNumber, monthName, allWeeksInMonth, addMonths, newDate) where
+module Date.Util (equalDates, monthNumber, monthName, allWeeksInMonth, addMonths, newDate, toMonth) where
 
 import Date as Date exposing (Date)
 import WebAPI.Date as WebDate
@@ -35,12 +35,12 @@ addDays : Date -> Int -> Date
 addDays date n =
   WebDate.offsetTime (toFloat ((n * 24 + 3) * 3600000)) date
 
-newDate : Int -> Date.Month -> Date
-newDate year month = 
+newDate : Int -> Date.Month -> Int -> Date
+newDate year month day = 
   let parts =
         { year = year
         , month = WebDate.fromMonth month
-        , day = 1
+        , day = day
         , hour = 0
         , minute = 1
         , second = 0
@@ -52,7 +52,7 @@ newDate year month =
 allDaysInMonth : Date.Month -> Int -> List Date
 allDaysInMonth month year = 
   let
-    firstDate = newDate year month
+    firstDate = newDate year month 1
   in                       
     List.filter (\d -> month == Date.month d)
                 (List.map (addDays firstDate) [0..32])
@@ -86,7 +86,7 @@ allWeeksInMonth month year =
 
 addMonths : (Date.Month, Int) -> Int -> (Date.Month, Int)
 addMonths (m, y) a =
-  let date = newDate y m
+  let date = newDate y m 1
       date' = (WebDate.offsetMonth WebDate.Local a date)
   in
     (Date.month date', Date.year date')
@@ -97,3 +97,7 @@ equalDates d1 d2 =
   (Date.month d1 == Date.month d2) &&
   (Date.year d1 == Date.year d2)
 
+-- base 1, Jan -> 1
+toMonth : Int -> Date.Month
+toMonth n =
+  WebDate.toMonth (n - 1)

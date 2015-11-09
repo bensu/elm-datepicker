@@ -1,5 +1,6 @@
 module Widget.Datepicker (Datepicker, Action, view, update, initValue) where
 
+import Array
 import String as String
 import Date as Date exposing (Date)
 import Html exposing (..) 
@@ -15,11 +16,13 @@ import Date.Util
 type alias Datepicker = {
      date: Maybe Date,
      selectMonth: Maybe (Date.Month, Int),
-     isOn: Bool
+     isOn: Bool,
+     v: String
 }
 
 initValue = { date = Nothing
             , isOn = False
+            , v = ""
             , selectMonth = Nothing }
 
 type Move = Prev | Next
@@ -169,6 +172,34 @@ renderDate date =
       in 
         String.concat (List.intersperse "/" strs) 
   
+maybeInt : String -> Maybe Int
+maybeInt s =
+  Result.toMaybe (String.toInt s)
+
+extractVals : Array.Array Int -> Maybe (Int, Int, Int)
+extractVals a =
+  case (Array.get 0 a) of
+    Nothing -> Nothing
+    Just d -> (case (Array.get 1 a) of
+                 Nothing -> Nothing
+                 Just m -> (case (Array.get 2 a) of
+                              Nothing -> Nothing
+                              Just y -> Just (y, m, d)))
+  
+parseDate : String -> Maybe Date
+parseDate s =
+  let parts = String.split "/" s
+  in
+    if ((List.length parts) == 3)
+    then (let parts' = (List.filterMap maybeInt parts)
+          in
+            (if (List.length parts' == 3)
+            then (case (extractVals (Array.fromList parts')) of
+                    Nothing -> Nothing
+                    Just (y, m, d) -> (Just (Date.Util.newDate y (Date.Util.toMonth m) d)))
+            else Nothing))
+    else Nothing
+
 {- onBlur should be 'click out' to allow for clicks an not onMouseOver
    on other events -}
 view: Address Action -> Datepicker -> Html
@@ -177,8 +208,14 @@ view address datepicker =
       [ input [ class "ui-datepicker-input"
               , Event.onBlur address Blur
               , Event.on
+                     "change"
+                     (Json.Decode.at ["target", "value"] Json.Decode.string)
+                     (\v -> Signal.message address (case parseDate v of
+                                                      Nothing -> NoOp
+                                                      Just d -> (Select d)))
+              , Event.on
                      "focus"
-                     ((:=) "timeStamp" Json.Decode.float)
+                     ("timeStamp" := Json.Decode.float)
                      (\t -> let d = Date.fromTime t
                             in
                               Signal.message address (Focus ((Date.month d),
@@ -217,7 +254,8 @@ update action model =
                                Nothing -> (Just newSelectMonth)
                                Just m -> Just m }
         Select date ->
-            { model | date <- Just date }
+            { model | date <- (Just date)
+                    , selectMonth <- Just (Date.month date, Date.year date) }
         DeltaMonth move ->
           case model.selectMonth of
             Nothing -> model
