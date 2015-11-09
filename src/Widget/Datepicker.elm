@@ -101,17 +101,25 @@ dayLabel day =
 ----------------
 -- Day Boxes ---
 
-dayNumber : Address Action -> Maybe Date -> Html
-dayNumber address date =
+isSelected : Maybe Date -> Date -> Bool
+isSelected selected date =
+  case selected of
+    Nothing -> False
+    Just d -> (Date.Util.equalDates d date)
+
+dayNumber : Address Action -> Maybe Date -> Maybe Date -> Html
+dayNumber address selected date =
   case date of
     Nothing -> td [] []
-    Just date ->
+    Just d ->
           td []
-             [a [ class "ui-state-default"
+             [a [ classList [ ("ui-state-default", True)
+                            , ("ui-state-highlight", isSelected selected d)
+                            ]
                 , href "#"
-                , Event.onMouseDown address (Select date)
+                , Event.onMouseDown address (Select d)
                 ]
-                [Html.text (toString (Date.day date))]]
+                [Html.text (toString (Date.day d))]]
 
 {- The first week of the month may not start on a Sunday,
    completeWeek completes the first days, from Sunday to
@@ -131,20 +139,20 @@ completeWeek week =
                               Date.Sun -> week
                               _ -> completeWeek (Nothing :: week)
 
-weekRow : Address Action -> List Date -> Html
-weekRow address week = 
+weekRow : Address Action -> Maybe Date -> List Date -> Html
+weekRow address selected week = 
         tr []
-           (List.map (dayNumber address)
+           (List.map (dayNumber address selected)
                      (completeWeek (List.map (\d -> Just d) week)))
 
-calendar : Address Action -> (Date.Month, Int) -> Html
-calendar address (m,y) =
+calendar : Address Action -> Maybe Date -> (Date.Month, Int) -> Html
+calendar address selected (m,y) =
   table [class "ui-datepicker-calendar"]
         [thead []
                [tr []
                    (List.map dayLabel days)]
         ,tbody []
-               (List.map (weekRow address)
+               (List.map (weekRow address selected)
                          (Date.Util.allWeeksInMonth m y))]
 
 -- Show the current date in the input field
@@ -192,7 +200,7 @@ view address datepicker =
                            ]
                        ]
                        [ header address m
-                       , calendar address m
+                       , calendar address datepicker.date m
                        ])
       ]
 

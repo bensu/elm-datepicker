@@ -1,4 +1,4 @@
-module Date.Util (monthNumber, monthName, allWeeksInMonth, addMonths, newDate) where
+module Date.Util (equalDates, monthNumber, monthName, allWeeksInMonth, addMonths, newDate) where
 
 import Date as Date exposing (Date)
 import WebAPI.Date as WebDate
@@ -89,3 +89,10 @@ addMonths (m, y) a =
       date' = (WebDate.offsetMonth WebDate.Local a date)
   in
     (Date.month date', Date.year date')
+
+equalDates : Date -> Date -> Bool
+equalDates d1 d2 =
+  (Date.day d1 == Date.day d2) && 
+  (Date.month d1 == Date.month d2) &&
+  (Date.year d1 == Date.year d2)
+
