@@ -1,4 +1,4 @@
-module Date.Util (monthNumber, monthName, allWeeksInMonth, addMonths) where
+module Date.Util (monthNumber, monthName, allWeeksInMonth, addMonths, newDate) where
 
 import Date as Date exposing (Date)
 import WebAPI.Date as WebDate
@@ -39,7 +39,7 @@ newDate year month =
   let parts =
         { year = year
         , month = WebDate.fromMonth month
-        , day = 0
+        , day = 1
         , hour = 0
         , minute = 0
         , second = 0
