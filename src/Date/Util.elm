@@ -1,5 +1,7 @@
-module Date.Util (equalDates, monthNumber, monthName, allWeeksInMonth, addMonths, newDate, toMonth) where
+module Date.Util (equalDates, monthNumber, monthName, allWeeksInMonth, addMonths, newDate, toMonth, parseDate) where
 
+import Array
+import String as String
 import Date as Date exposing (Date)
 import WebAPI.Date as WebDate
 
@@ -101,3 +103,31 @@ equalDates d1 d2 =
 toMonth : Int -> Date.Month
 toMonth n =
   WebDate.toMonth (n - 1)
+
+maybeInt : String -> Maybe Int
+maybeInt s =
+  Result.toMaybe (String.toInt s)
+
+extractVals : Array.Array Int -> Maybe (Int, Int, Int)
+extractVals a =
+  case (Array.get 0 a) of
+    Nothing -> Nothing
+    Just d -> (case (Array.get 1 a) of
+                 Nothing -> Nothing
+                 Just m -> (case (Array.get 2 a) of
+                              Nothing -> Nothing
+                              Just y -> Just (y, m, d)))
+  
+parseDate : String -> Maybe Date
+parseDate s =
+  let parts = String.split "/" s
+  in
+    if ((List.length parts) == 3)
+    then (let parts' = (List.filterMap maybeInt parts)
+          in
+            (if (List.length parts' == 3)
+            then (case (extractVals (Array.fromList parts')) of
+                    Nothing -> Nothing
+                    Just (y, m, d) -> (Just (newDate y (toMonth m) d)))
+            else Nothing))
+    else Nothing
